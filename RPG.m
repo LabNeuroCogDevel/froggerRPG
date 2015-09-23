@@ -623,6 +623,7 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         showProgress(w, s, e, map, runNum)
         s.events.totalScore = s.events.totalScore + sum([e(:).cogPoints]) + sum([e(:).mapPoints]);
         s.events.totalScore
+        WaitForKey({'Space','q','Escape'});
     end
         
     

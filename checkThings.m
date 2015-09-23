@@ -6,6 +6,8 @@ function [w,s]= checkThings()
  s=getSettings(s,'',[]);
  s=maketex(w,s);
  
+ calibrate(w,s.screen.res);
+ 
  e(1).cogPoints=10; e(1).mapPoints=10;
  showProgress(w,s,e,[],1)
 

@@ -40,5 +40,7 @@ function calibrate(varargin)
    key = showCal(w,res,index);
 
   end
-  Screen('CloseAll');
+  
+  % close screen if we didn't have one when we started
+  if isempty(varargin); Screen('CloseAll'); end
 end
