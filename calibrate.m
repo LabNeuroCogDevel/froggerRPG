@@ -1,13 +1,22 @@
 %% calibrate -- display numbered dots for calibrating eye tracking
 %  arrow keys, space, q, and esc control presentation
-%  uses privae/showCal to do displaying
+%  uses private/showCal to do displaying
+%  ---
+%  will take a window w as an argument, otherwise will open a new window
+%  with setupscreen
 
-function calibrate
+function calibrate(varargin)
 
   KbName('UnifyKeyNames');
 
-  % [w, res] = Screen('OpenWindow', 0, [120 120 120],[0 0 800 600]);
-  [w,res] = setupScreen([120 120 120], []);
+  if ~isempty(varargin) && length(varargin) > 1
+     w=varargin{1};
+     res=varargin{2};
+  else
+     % [w, res] = Screen('OpenWindow', 0, [120 120 120],[0 0 800 600]);
+     [w,res] = setupScreen([120 120 120], []);
+  end
+
   key = showCal(w,res,5);
   index=0;
 

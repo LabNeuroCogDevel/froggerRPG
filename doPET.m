@@ -18,12 +18,14 @@ if ~any(eyeTrack == [0 1])
     eyeTrack = 0;
 end
 
-task = input('Main task (1) or sensorimotor control (2): ');
-if task == 2
-    smmode = 'smcontrol';
-else
-    smmode = [];
-end
+smmode=[];
+% we are always doing main task now
+%task = input('Main task (1) or sensorimotor control (2): ');
+%if task == 2
+%    smmode = 'smcontrol';
+%else
+%    smmode = [];
+%end
 
 w = []; 
 if startRun == 1

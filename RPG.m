@@ -90,7 +90,10 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
     s.pahandle = pahandle;
     
     if ~s.session.simulate
-        showCal(w, s.screen.res);
+        % use keypad controled calibration 
+        % so scanner sent '=' does not advance screen
+        % instead of static screen: showCal(w, s.screen.res);
+        calibrate(w,s.screen.res);
     end
 
     if runNum == 1 & ~s.session.simulate
