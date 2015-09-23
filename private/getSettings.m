@@ -172,12 +172,12 @@ s.sounds.reward{2}.fname = fullfile(pwd, 'sounds', 'ding-5.wav');
 s.sounds.cogreward{1}.fname = fullfile(pwd, 'sounds', 'beep.wav');
 s.sounds.cogreward{2}.fname = fullfile(pwd, 'sounds', 'diamond_sound_multi.wav');
 
-[s.sounds.beep.aud, s.sounds.beep.fs] = wavread(s.sounds.beep.fname);
-[s.sounds.null.aud, s.sounds.null.fs] = wavread(s.sounds.null.fname);
-[s.sounds.reward{1}.aud, s.sounds.reward{1}.fs] = wavread(s.sounds.reward{1}.fname);
-[s.sounds.reward{2}.aud, s.sounds.reward{2}.fs] = wavread(s.sounds.reward{2}.fname);
-[s.sounds.cogreward{1}.aud, s.sounds.cogreward{1}.fs] = wavread(s.sounds.cogreward{1}.fname);
-[s.sounds.cogreward{2}.aud, s.sounds.cogreward{2}.fs] = wavread(s.sounds.cogreward{2}.fname);
+[s.sounds.beep.aud, s.sounds.beep.fs] = wavread_(s.sounds.beep.fname);
+[s.sounds.null.aud, s.sounds.null.fs] = wavread_(s.sounds.null.fname);
+[s.sounds.reward{1}.aud, s.sounds.reward{1}.fs] = wavread_(s.sounds.reward{1}.fname);
+[s.sounds.reward{2}.aud, s.sounds.reward{2}.fs] = wavread_(s.sounds.reward{2}.fname);
+[s.sounds.cogreward{1}.aud, s.sounds.cogreward{1}.fs] = wavread_(s.sounds.cogreward{1}.fname);
+[s.sounds.cogreward{2}.aud, s.sounds.cogreward{2}.fs] = wavread_(s.sounds.cogreward{2}.fname);
 
 [s.sounds.beep.aud, s.sounds.beep.fs] = myresample(s.sounds.beep.aud, s.sounds.beep.fs, fs);
 [s.sounds.null.aud, s.sounds.null.fs] = myresample(s.sounds.null.aud, s.sounds.null.fs, fs);
@@ -292,4 +292,12 @@ function [aud, freq] = myresample(aud, infreq, freq)
     [samplecount, ninchannels] = size(aud); 
     aud = repmat(transpose(aud), 2 / ninchannels, 1);    
     aud = aud*.4;
+end
+% wavread is removed
+function [aud,fs]=wavread_(varargin)
+  try
+      [aud,fs]=wavread(varargin{:});
+  catch
+      [aud,fs]=audioread(varargin{:});
+  end
 end
