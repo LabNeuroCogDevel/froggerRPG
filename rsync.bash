@@ -2,9 +2,11 @@
 this=$(cd $(dirname $0); pwd)
 mount |grep usb || sudo mount /mnt/usb || exit
 
-sudo rsync -nrvhi $this /mnt/usb/ --exclude 'results/*' --size-only
-echo okay?
+rcmd="sudo rsync -rvhi $this /mnt/usb/ --exclude 'results/*' --size-only --exclude '.git'"
+eval $rcmd --dry-run
+echo
+echo -n "okay? (^c to quit)??? "
 read junk
-sudo rsync -rvhi $this /mnt/usb/ --exclude 'results/*'  --size-only
+eval $rcmd 
 
 
