@@ -46,7 +46,8 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
     sendXdat(0);
     if isempty(w)
         InitializePsychSound;
-        [w,res]=setupScreen([120 120 120], []);s.screen.res = res(3:4);
+        [w,res]=setupScreen([120 120 120], []);
+        s.screen.res = res(3:4);
     end
     
     PsychPortAudio('Close')
@@ -55,10 +56,16 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
     else
         totalScore = 0;
     end
-
+    
+    % could use this to make sure settings doesn't get overwritten
+    % too scared to try WF20160421
+    %if ~isfield(s,'host') || ~isfield(s,'keys') || ~isfield(s,'map')
+    %    s = getSettings(s, '', smmode); 
+    %end
+    
     s = getSettings(s, '', smmode); 
     s.events.totalScore = totalScore;
-    
+
     if s.forceReopenWindow
         [w,res]=setupScreen([120 120 120], []);s.screen.res = res(3:4);
     end
@@ -76,20 +83,18 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
 %         %s.screen.res = res;
 %     end
     
-    s.images.me.tex = Screen('MakeTexture', w, s.images.me.image);
-    s.images.reward{1}.tex = Screen('MakeTexture', w, s.images.reward{1}.image);
-    s.images.reward{2}.tex = Screen('MakeTexture', w, s.images.reward{2}.image);
-    s.images.cogreward{1}.tex = Screen('MakeTexture', w, s.images.cogreward{1}.image);
-    s.images.cogreward{2}.tex = Screen('MakeTexture', w, s.images.cogreward{2}.image);
-    s.images.null.tex = Screen('MakeTexture', w, s.images.null.image);
-    s.images.bg.tex = Screen('MakeTexture', w, s.images.bg.image);
-    s.images.progress_bg.tex = Screen('MakeTexture', w, s.images.progress_bg.image);
+    s=maketex(w,s);
     
     pahandle = PsychPortAudio('Open', [], [], 1, s.sounds.null.fs, 2);
     PsychPortAudio('UseSchedule', pahandle, 0);
     s.pahandle = pahandle;
     
-    showCal(w, s.screen.res);
+    if ~s.session.simulate
+        % use keypad controled calibration 
+        % so scanner sent '=' does not advance screen
+        % instead of static screen: showCal(w, s.screen.res);
+        calibrate(w,s.screen.res);
+    end
 
     if runNum == 1 & ~s.session.simulate
         instructions(w, s);
@@ -103,19 +108,40 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         scannerTrigger = 1;
         [keyIsDown, keyPressTime, keyCode] = KbCheck;
     end
-    
-    while ~scannerTrigger
+
+    % 20180103 WF - pull waiting screen flip out of while loop
+    if ~scannerTrigger
         if s.host.isMR
             DrawFormattedText(w,'Waiting to start','center','center',[ 0 0 0 ]);
         else
             DrawFormattedText(w,'Press = to start','center','center',[ 0 0 0 ]);
         end
-        
         Screen('Flip',w);
-        [keyIsDown, keyPressTime, keyCode] = KbCheck;
-        if strcmp( KbName(keyCode), '=+' ) | strcmp( KbName(keyCode), '=' )
-            scannerTrigger = 1;
+    end
+    
+    while ~scannerTrigger
+        % 20180103WF button box changed
+        % previous KbCheck and KbWait do not work
+        % need KbQueue
+        KbQueueCreate(); KbQueueStart()
+        while ~ scannerTrigger
+               [pressed, firstPress, ~, ~, ~] = KbQueueCheck();
+               scannerTrigger = pressed && ...
+                              any(ismember({'=','=+'}, KbName(firstPress)));
         end
+        % release so we can get subject button pushes with KbCheck
+        % this takes about 0.090 seconds
+        KbQueueStop(); KbQueueRelease()
+        
+        % using KbWait
+        % [~, keyCode, ~] = KbWait;
+        % scannerTrigger =  any(ismember({'=','=+'}, KbName(keyCode)) );
+        
+        % using KbCheck
+        %[keyIsDown, keyPressTime, keyCode] = KbCheck;
+        %if strcmp( KbName(keyCode), '=+' ) | strcmp( KbName(keyCode), '=' )
+        %    scannerTrigger = 1;
+        %end  
     end
 
     % we start when the scanner sends the go ahead
@@ -137,7 +163,8 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         % get settings for this trial
         trl    = e(ei).trl;
         ename  = e(ei).name;
-        onset  = e(ei).onset + starttime;
+        hashOnset  = e(ei).hashOnset + starttime;
+        promptOnset  = e(ei).promptOnset + starttime;
         moveOnset = e(ei).moveOnset + starttime;
         cogOnset  = e(ei).cogOnset + starttime;
         fbOnset   = e(ei).fbOnset + starttime;
@@ -145,15 +172,14 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         % show map and wait for trial start time
         e(ei).map = map;
         e(ei).currentLocation = map.currentLocation;
-        e(ei).times.onset = updateMap(w, s, e(ei)) - starttime;
+%        e(ei).times.onset = updateMap(w, s, e(ei)) - starttime;
+        e(ei).times.onset = event_Fix(w, s, e(ei), 0) - starttime;
+
         sendXdat(s.parallel.xdat.mapDisplay);
 
-        while GetSecs<onset
-            WaitSecs(0.001);
-        end
 
         %e(ei)
-        fprintf(1, '%.0f: Waiting for move; Expected %.2f, Actual %.2f, %s\n', GetSecs, e(ei).onset, GetSecs-starttime, e(ei).name);
+        fprintf(1, '\n%.0f: Baseline fixation; Actual %.2f, %s\n', ei, GetSecs-starttime, e(ei).name);
 
         % prompt for move
         %  first, pick a new probability level
@@ -260,10 +286,28 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
             moveOpts(i).value = i; % relabel
         end
         
+        %e(ei).times.hash = GetSecs - starttime; %
+        if s.events.showHash
+            % show hashes
+            while GetSecs<hashOnset
+                WaitSecs(0.001);
+            end
+            
+            e(ei).times.hash = updateMap(w, s, e(ei), [], moveOpts, {'#','#'}) - starttime;
+            fprintf(1, '%.0f: Hashes, preparing response; Expected %.2f, Actual %.2f, %s\n', ei, e(ei).hashOnset, e(ei).times.hash, e(ei).name);
+        else
+            e(ei).promptOnset = e(ei).hashOnset;
+            promptOnset = hashOnset;
+        end
+        
         % update event log and show move options
         e(ei).map = map;
         e(ei).moveOpts = moveOpts;
+        while GetSecs<promptOnset
+            WaitSecs(0.001);
+        end        
         e(ei).times.prompt = updateMap(w, s, e(ei), [], moveOpts) - starttime;
+        fprintf(1, '%.0f: Prompt, waiting for response; Expected %.2f, Actual %.2f, %s\n', ei, e(ei).promptOnset, e(ei).times.prompt, e(ei).name);
         sendXdat(s.parallel.xdat.mapChoices);
 
         % wait for move choice
@@ -279,10 +323,7 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         
         
         if validResponse
-            pushedkey=find(keyCode,1,'first'),
-            pushedidx=find(pushedkey==s.keys.finger),
-            s.keys.string,
-            keyPressName = s.keys.string{pushedidx};
+            keyPressName = s.keys.string{find(find(keyCode,1,'first')==s.keys.finger)};
             if strcmp(keyPressName, 'Esc') %find(keyCode,1,'first')==s.keys.finger(5)
                 break;
             end
@@ -330,7 +371,7 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         e(ei).map = map;
         e(ei).times.move = move(w, s, e(ei)) - starttime; %updateMap(w, s, e(ei));
         sendXdat(s.parallel.xdat.mapReward);
-        fprintf(1, '%.0f: Move, showing reward; Expected %.2f, Actual %.2f, %s\n', GetSecs, e(ei).moveOnset, e(ei).times.move, e(ei).name);
+        fprintf(1, '%.0f: Move, showing reward; Expected %.2f, Actual %.2f, %s\n', ei, e(ei).moveOnset, e(ei).times.move, e(ei).name);
         map = e(ei).map;
         e(ei).mapPoints =  s.reward.points(e(ei).rewType+1);
         
@@ -347,13 +388,13 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         firstNaN = find(isnan(squeeze(map.visitOutcomes(map.currentLocation.x, map.currentLocation.y,:))),1,'first');
         map.visitOutcomes(map.currentLocation.x, map.currentLocation.y,firstNaN) = e(ei).rewType;
 
-        if e(ei).reward
+        
+        if e(ei).hascog
             
             % wait for cog onset
             while GetSecs < cogOnset
                 WaitSecs(0.001);
             end
-            
             
             % purge eye tracker cache before showing fixation
             if ~isempty(s.serial.handle)
@@ -361,17 +402,22 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
             end
             
             % show bonus round screen
-            bonus_round(w, s, e(ei), ~strcmp(smmode, 'smcontrol'));
+            bonusTime = bonus_round(w, s, e(ei), ~strcmp(smmode, 'smcontrol')) - starttime;
+            fprintf(1, '%.0f: Bonus round screen; Expected %.2f, Actual %.2f, %s\n', ei, e(ei).cogOnset, bonusTime, e(ei).name);
             if ~s.session.simulate
-                WaitSecs(1.0);
+                WaitSecs(s.events.bonusRoundTime);
             end
             
             % show fixation
             sendXdat(s.parallel.xdat.cogFixation);
+            fixColor = s.fix.color;
+            s.fix.color = s.fix.anticolor;
             e(ei).times.cogFixation = event_Fix(w, s, e(ei), 0) - starttime;
-            fprintf(1, '%.0f: Fixation; Expected %.2f, Actual %.2f, %s\n', GetSecs, e(ei).cogOnset, e(ei).times.cogFixation, e(ei).name);
+            s.fix.color = fixColor;
+            
+            fprintf(1, '%.0f: Cog fixation; Actual %.2f, %s\n', ei, e(ei).times.cogFixation, e(ei).name);
             if ~s.session.simulate
-                WaitSecs(3.0);
+                WaitSecs(s.events.cogFixTime + randn(1,1)*s.events.cogFixJitter);
             end           
 
             switch e(ei).cogRewType
@@ -396,7 +442,7 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
 
                 waitUntil = GetSecs + 3;
                 if ei < length(e)
-                    waitUntil = e(ei+1).onset - 1.0 + starttime;
+                    waitUntil = e(ei).fbOnset; %onset - 1.0 + starttime;
                 end
                 
                 if s.session.simulate
@@ -404,7 +450,7 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
                 end
                 
 
-                while GetSecs < (waitUntil - 1.5*showBonus)
+                while GetSecs < waitUntil
                     WaitSecs(0.001);
                 end
 %                DrawFormattedText(w, sprintf('Free!\n+%d', s.reward.points(e(ei).rewType)), 'center', 'center', ...
@@ -431,6 +477,8 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
                 end
                 
                 e(ei).times.catchFeedback = bonus_round(w, s, e(ei), showBonus, fbString, fbColor) - starttime;
+                fprintf(1, '%.0f: Presenting catch feedback; Expected %.2f, Actual %.2f, %s\n', ei, e(ei).fbOnset, e(ei).times.catchFeedback, e(ei).name);
+                sendXdat(s.parallel.xdat.cogFeedback);
 
                 switch e(ei).cogRewType
                     case 2
@@ -464,7 +512,7 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
                     WaitSecs(0.001);
                 end
 
-            else
+            else % real antisaccade, not catch
                 
                 % grab eye tracking data during fixation
                 %   this will also empty the cache before doing the anti
@@ -513,6 +561,12 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
                 end
                 
                 % show feedback
+                if e(ei).cogRewType == 2
+                        fbString = 'Bonus!';
+                    else
+                        fbString = 'Correct';
+                end
+                
                 while GetSecs < fbOnset
                     WaitSecs(0.001);
                 end
@@ -551,23 +605,26 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
                                 s.map.colors.text);
                         e(ei).cogPoints = 0;
                         snd = s.sounds.null;
+                        e(ei).times.feedback = GetSecs - starttime; % Screen('Flip',w) - starttime;
                 else
-                    if (~isempty(e(ei).cogRes.respEval) && e(ei).cogRes.respEval) | ~eyetrack
-                        bonus_round(w, s, e(ei), 1, 'Bonus!', s.anti.colors.correct);
+                    if (~isempty(e(ei).cogRes.respEval) && e(ei).cogRes.respEval) | ~eyetrack % correct
+                        e(ei).times.feedback = bonus_round(w, s, e(ei), 1, fbString, s.anti.colors.correct) - starttime;
 %                         DrawFormattedText(w, sprintf('Bonus!') , 'center', 'center', ...
 %                                     s.flanker.colors.correct);
                         e(ei).cogPoints =  s.reward.points(e(ei).cogRewType+1);
                         snd = s.sounds.cogreward{e(ei).cogRewType};
-                    else
-	                bonus_round(w, s, e(ei), 0, sprintf('Incorrect\nNo bonus'), s.anti.colors.text);
+                    else % incorrect
+    	                e(ei).times.feedback = bonus_round(w, s, e(ei), 0, sprintf('Incorrect\nNo bonus'), s.anti.colors.text) - starttime;
 %                         DrawFormattedText(w, 'Incorrect\nNo bonus', 'center', 'center', ...
 %                                 s.map.colors.text);
                         e(ei).cogPoints = 0;
                         snd = s.sounds.beep;
-                        s.events.numExtraBonusNeeded = s.events.numExtraBonusNeeded + 1;
+                        if e(ei).cogRewType == 2 % give an extra bonus if they missed this one
+                            s.events.numExtraBonusNeeded = s.events.numExtraBonusNeeded + 1;
+                        end
                     end
                 end
-                e(ei).times.feedback = GetSecs - starttime; % Screen('Flip',w) - starttime;
+                fprintf(1, '%.0f: Presenting feedback; Expected %.2f, Actual %.2f, %s\n', ei, e(ei).fbOnset, e(ei).times.feedback, e(ei).name);
                 sendXdat(s.parallel.xdat.cogFeedback);
 
                 switch e(ei).cogRewType
@@ -593,27 +650,38 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
                     % Close audio device, shutdown driver:
                     %PsychPortAudio('Close');
                 end
+                fprintf(1, '%.0f: Feedback audio complete; Actual %.2f, %s\n', ei, GetSecs-starttime, e(ei).name);
                 
-                fprintf(1, '%.0f: Presenting feedback; Expected %.2f, Actual %.2f, %s\n', GetSecs, e(ei).fbOnset, e(ei).times.feedback, e(ei).name);
+                
                 if ~s.session.simulate
-                    while GetSecs < e(ei).times.feedback + 1.0
+                    while GetSecs < e(ei).times.feedback + s.events.fbDur
                         WaitSecs(0.01);
                     end
                 end
                 Screen('TextSize', w, oldTextSize);
+                fprintf(1, '%.0f: Feedback delay complete; Actual %.2f, %s\n', ei, GetSecs-starttime, e(ei).name);
             
             end
            
-        else
+        else % no cog task
+            
+            % finish showing reward, then end trial
             
             if ~s.session.simulate
-                WaitSecs(1.0);
+                while GetSecs < moveOnset+s.events.mapRewardTime
+                    WaitSecs(0.001);
+                end
             end
             
         end
         
        
             
+    end
+    
+    event_Fix(w, s, e(ei), 0)
+    while GetSecs < starttime+300
+        WaitSecs(0.01);
     end
     
     %maptestResults = [];
@@ -628,10 +696,16 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         showProgress(w, s, e, map, runNum)
         s.events.totalScore = s.events.totalScore + sum([e(:).cogPoints]) + sum([e(:).mapPoints]);
         s.events.totalScore
+        keyPressName = WaitForKey({'Space','q','Escape'});
     end
         
+    if strcmp(keyPressName, 'q')
+        closedown();
+        return;
+    end
+    WaitSecs(1.0);
     
-    if ~s.session.simulate% && runNum==6
+    if 1 || ~s.session.simulate
     
         
 %         DrawFormattedText(w, ...
@@ -650,7 +724,8 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
 % %        maptestResults = maptest(w, s, 5, map, 'matchedVisits');
 %         maptestResults = maptest(w, s, 10, map, 'hybrid');
 
-        if ~isempty(runNum) & runNum == 1%s.session.maxRuns
+        if ~isempty(runNum) & runNum == s.session.maxRuns
+	    sendXdat(0);
             DrawFormattedText(w, ...
                 ['Good job!  Now we''ll see how well you learned the map.\n\n' ...
                  'For each of the squares you''ll be shown, indicate\n\n' ...
@@ -658,7 +733,7 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
                  '(Press any key to start)'], ...
                 'center','center',[ 1 1 1 ]*255);
             Screen('Flip', w);
-            KbWait;
+            WaitForKey({'Space','q','Escape'});
             finalMaptestResults = maptest(w, s, 50, map, 'random');
         else
             finalMaptestResults = [];

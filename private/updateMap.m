@@ -1,4 +1,4 @@
-function timestamp = updateMap(w, s, e, highlight, numbers)
+function timestamp = updateMap(w, s, e, highlight, numbers, valStrs)
 
 %    % map settings
 %     s.map.gridSize = 4;
@@ -21,6 +21,15 @@ if nargin<5 || isempty(numbers)
     numbers = [];
     % struct with fields value, x, y
 end
+
+if nargin<6 || isempty(valStrs)
+    if isempty(numbers)
+        valStrs = {'', ''};
+    else
+        valStrs = {num2str(numbers(1).value), num2str(numbers(2).value)};
+    end
+end
+
 
 map = e.map;
 
@@ -73,27 +82,10 @@ if ~isempty(numbers)
         hx1 = x1 + colSize*(hx-1);
         hy1 = y1 + colSize*(hy-1);
         
-        num2str(val),
-        s.map.colors.text,
-        boundingbox=[hx1 hy1 hx1+colSize hy1+colSize],
-        
         oldTextSize=Screen('TextSize', w, 64);
-        % 3.0.10 - Flavor: beta - Corresponds to SVN Revision 3405
-        % [nx, ny, textbounds] = DrawFormattedText(
-        %   win, tstring [, sx][, sy]
-        %   [, color][, wrapat][, flipHorizontal]
-        %   [, flipVertical][, vSpacing][, righttoleft])
-        %
-        % newer (3.0.11?) version:
-        % [nx, ny, textbounds] = DrawFormattedText(win, tstring [, sx][, sy]
-        % [, color][, wrapat][, flipHorizontal][, flipVertical]
-        % [, vSpacing][, righttoleft][, winRect])
-        
-        [nx, ny, textbounds] = DrawFormattedText(...
-            w, num2str(val), 'center', 'center', ...
-            s.map.colors.text, [], [],...
-            [], [],  [], ...
-            boundingbox);
+        [nx, ny, textbounds] = DrawFormattedText(w, valStrs{val}, 'center', 'center', ...
+            s.map.colors.text, [], [], [], [], [], ...
+            [hx1 hy1 hx1+colSize hy1+colSize]);
         Screen('TextSize', w, oldTextSize);
     end
 end

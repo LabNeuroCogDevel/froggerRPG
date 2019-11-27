@@ -1,7 +1,12 @@
 %% record
 
 IOPort('CloseAll');
-[h, openErr] = IOPort('OpenSerialPort', '/dev/ttyS0', 'BaudRate=57600')
+
+if iswin
+    [h, openErr] = IOPort('OpenSerialPort', 'COM2', 'BaudRate=57600')
+else
+    [h, openErr] = IOPort('OpenSerialPort', '/dev/ttyS0', 'BaudRate=57600')
+end
 
 WaitSecs(0.5);
 
@@ -16,7 +21,7 @@ while 1
         if keyIsDown
             %keyName
         end
-        validKey = strcmp(keyName, 'Return');
+        validKey = strcmp(lower(keyName), 'return');
     end
     
     trigger = trigger + 1;

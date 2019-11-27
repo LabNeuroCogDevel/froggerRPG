@@ -192,7 +192,7 @@ DrawFormattedText(w, sprintf('Points earned this round: %d\nTotal points: %d', r
 Screen('DrawTexture', w, s.images.progress_bg.tex, [], bg_rect);%x1 y1 x2 y2]);
 showfrog(stepsPerLevel*runNum);
 Screen('Flip', w);
-WaitSecs(2.0);
+WaitSecs(0.5);
 
 Screen('TextSize', w, oldTextSize);
 

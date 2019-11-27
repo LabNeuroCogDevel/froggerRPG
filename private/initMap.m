@@ -48,7 +48,7 @@ if nargin<2 || isempty(m)
     m.pMap = pMap;
     
     % find # of repetitions
-    totalTrials = numEv * settings.session.maxRuns;
+    totalTrials = settings.events.nTrl; %numEv * settings.session.maxRuns;
     trialsPerProb = ceil(totalTrials / length(m.pLevels));
     for i = 1:length(m.pLevels)
         m.trials.maxTrials(i) = trialsPerProb;

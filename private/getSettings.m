@@ -29,9 +29,9 @@ function s=getSettings(s, host, smmode)
  % MEG         => send trigger codes and photodiode
  s.host.name = host;
  if strncmp(host,'Admin_PC',8)
-  s.host.type='MR';
-  s.host.isMR=1;
-  s.host.isBehave=0;
+  s.host.type='Unknown'; %'MR';
+  s.host.isMR=0; %1;
+  s.host.isBehave=1; %0;
   s.host.isMEG=0;
   %s.screen.res=[1024 768];   % MRCTR
   fprintf('running MR\n');
@@ -76,26 +76,43 @@ function s=getSettings(s, host, smmode)
    s.keys.finger = KbName({'2','3','4','5'}); 
  else
 %   s.keys.finger = KbName({'1!','2@','3','4', 'ESCAPE'}); 
-   s.keys.finger = KbName({'2','3','2@','3#','ESCAPE'}); 
+   s.keys.finger = KbName({'2','3','2@','3#', 'ESCAPE'}); 
  end
 
  % string corresponding to finger
  % MUST BE numeric
  s.keys.string = {'1','2','1','2','Esc'};
 
-
+ s.keys.fingernames = {...
+                  'right index finger(1)',...
+                  'right middle finger(2)',...
+                  'right index finger(1!)', ...
+                  'right middle finger(2@)'...
+                  };
 
 
 
 % event settings
-s.events.nTrl    = 60; % number trials
-s.events.promptTime = 2; %1.5;
+s.events.nTrl    = 140; % total number trials across all runs
+s.events.promptTime = 1.5; %1.5;
+s.events.mapRewardTime = 1.5; % how long to show reward before going to fixation mark/next trial
+s.events.bonusRoundTime = 1.0;
+s.events.cogFixTime = 2.0; 
+s.events.cogFixJitter = 0.1; % standard deviation for normal distribution
+s.events.cogExecTime = 1.5;
+s.events.fbDur = 2.0;
+s.events.showHash = 1;
+
 s.events.numExtraBonusNeeded = 0;
 s.events.totalScore = 0;
 
 % map settings
 s.map.gridSize = 3;
-s.map.pixSize = 540;
+if ~ismac && iswin
+    s.map.pixSize = 540;
+else
+    s.map.pixSize = 540;
+end
 s.map.moveChoiceMethod = 'random'; % 'nearest' or 'random'
 s.map.colors.line = [1 1 1]*255;
 s.map.colors.bg = [.4 .4 .4]*255;
@@ -119,9 +136,9 @@ if ~(isfield(s, 'images') && isfield(s.images, 'me') && isfield(s.images.me, 'im
 end
 [s.images.reward{1}.image s.images.reward{1}.map s.images.reward{1}.alpha] = imread(fullfile(pwd, 'img', 'goldcoins-1.png'));% 'dollar-sign.png'));%'money-bag-single.png'));
 [s.images.reward{2}.image s.images.reward{2}.map s.images.reward{2}.alpha] = imread(fullfile(pwd, 'img', 'goldcoins-5.png'));%'dollar-signs-3.png'));%'money-bag-three.png'));
-[s.images.cogreward{1}.image s.images.cogreward{1}.map s.images.cogreward{1}.alpha] = imread(fullfile(pwd, 'img', 'coin-blank.png'));% 'dollar-sign.png'));%'money-bag-single.png'));
+[s.images.cogreward{1}.image s.images.cogreward{1}.map s.images.cogreward{1}.alpha] = imread(fullfile(pwd, 'img', 'circle-black2.png'));% 'dollar-sign.png'));%'money-bag-single.png'));
 [s.images.cogreward{2}.image s.images.cogreward{2}.map s.images.cogreward{2}.alpha] = imread(fullfile(pwd, 'img', 'multi-diamond.png'));%'dollar-signs-3.png'));%'money-bag-three.png'));
-[s.images.null.image s.images.null.map s.images.null.alpha] = imread(fullfile(pwd, 'img', 'coin-blank.png'));
+[s.images.null.image s.images.null.map s.images.null.alpha] = imread(fullfile(pwd, 'img', 'circle-black.png'));
 [s.images.blank.image s.images.blank.map s.images.blank.alpha] = imread(fullfile(pwd, 'img', 'circle-black.png'));
 [s.images.bg.image s.images.bg.map] = imread(fullfile(pwd, 'img', 'map3.png'));
 [s.images.progress_bg.image s.images.progress_bg.map s.images.progress_bg.alpha] = imread(fullfile(pwd, 'img', 'hill.png'));
@@ -136,7 +153,7 @@ s.images.progress_bg.image(:,:,4) = s.images.progress_bg.alpha;
 
 [s.images.reward{1}.image, s.images.reward{1}.map] = scaleImage(s.images.reward{1}.image, .8*colSize);
 [s.images.reward{2}.image, s.images.reward{2}.map] = scaleImage(s.images.reward{2}.image, .8*colSize);
-[s.images.cogreward{1}.image, s.images.cogreward{1}.map] = scaleImage(s.images.cogreward{1}.image, .3*colSize);
+[s.images.cogreward{1}.image, s.images.cogreward{1}.map] = scaleImage(s.images.cogreward{1}.image, .6*colSize);
 [s.images.cogreward{2}.image, s.images.cogreward{2}.map] = scaleImage(s.images.cogreward{2}.image, .8*colSize);
 [s.images.null.image, s.images.null.map] = scaleImage(s.images.null.image, .8*colSize);
 [s.images.blank.image, s.images.blank.map] = scaleImage(s.images.blank.image, .8*colSize);
@@ -215,6 +232,7 @@ s.reward.cogHighRewProb = 0.25;
 
 % fixation
 s.fix.color = [0 0 0];
+s.fix.anticolor = [.6 0 0]*255;
 
 % flanker task
 s.flanker.colors.text = [0 0 0]*255;
@@ -238,13 +256,19 @@ s.anti.center = 130;
 
 % eye tracking
 %IOPort('CloseAll');
-s.serial.port = '/dev/ttyS0';
+if ~ismac && iswin
+    s.serial.port = 'COM2';
+else
+    s.serial.port = '/dev/ttyS0';
+end
+
 s.serial.configString = 'BaudRate=57600';
 s.serial.handle = [];
 s.serial.openErrMsg = 'No device';
 s.forceReopenWindow = 0;
-if exist(s.serial.port, 'file')
+if iswin || exist(s.serial.port, 'file')
     try
+        IOPort('CloseAll')
         [s.serial.handle, s.serial.openErrMsg] = IOPort('OpenSerialPort', s.serial.port, s.serial.configString);
     catch
         % if there was an error, we probably need to re-open the display
@@ -265,6 +289,11 @@ s.parallel.xdat.cogFixation = 2^4;
 s.parallel.xdat.cogTask = 2^5;
 s.parallel.xdat.cogFeedback = 2^6;
 
+try
+    config_io
+catch
+    fprintf(1, 'Could not initialize config_io for serial comm\n');
+end
 
 end
 

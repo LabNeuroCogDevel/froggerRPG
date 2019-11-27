@@ -6,7 +6,7 @@ function timestamp = bonus_round(w, s, e, showReward, textString, textColor)
     end
     
     if nargin<5 || isempty(textString)
-        textString = 'Bonus Round!';
+        textString = 'Look-Away Game!';
     end
     
     if nargin<6 || isempty(textColor)
@@ -21,7 +21,14 @@ function timestamp = bonus_round(w, s, e, showReward, textString, textColor)
         [imgh,imgw,dim] = size(img.image);
 
         x1 = s.screen.res(1)/2 - imgw/2;
-        y1 = s.screen.res(2)/2 + 1.3*imgh;
+        
+        if e.cogRewType==1
+            y1 = s.screen.res(2)/2 + .75*imgh;
+        else
+            y1 = s.screen.res(2)/2 + 1.3*imgh;
+        end
+
+            
         Screen('DrawTexture', w, img.tex, [], [x1 y1 x1+imgw-1 y1+imgh-1]);        
     end
     

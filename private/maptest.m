@@ -102,14 +102,18 @@ for triali = 1:n
     r(triali).moveOpts = moveOpts;
     r(triali).trialStartTime = updateMap(w, s, e, [], moveOpts);
 
+    sendXdat(triali);
+
     % wait for move choice
     keyIsDown = 0;
     validResponse = 0;
-    validKeys = s.keys.finger(1:s.moves.numChoices);
+    validKeys = s.keys.finger;
     if length(s.keys.finger >= 5) % we have an exit button
         validKeys(end+1) = s.keys.finger(5);
     end
 
+    %validResponse = ~isempty(find(keyCode)) && any(find(keyCode,1,'first')==validKeys);
+    %
     testOnset = GetSecs;
     while (~keyIsDown | ~validResponse) & GetSecs<(testOnset+3)
         [keyIsDown, keyDownTime, keyCode] = KbCheck;
@@ -121,10 +125,12 @@ for triali = 1:n
     end
 
     if validResponse
-        r(triali).resp = str2double(s.keys.string{find(find(keyCode,1,'first')==s.keys.finger(1:s.moves.numChoices))});
+        r(triali).keyPressName = s.keys.string{find(find(keyCode,1,'first')==s.keys.finger)};
+        r(triali).resp = str2double(r(triali).keyPressName);
         r(triali).responseTime = keyDownTime;
         r(triali).rt = keyDownTime - r(triali).trialStartTime;
     else
+        r(triali).keyPressName = [];
         r(triali).resp = [];
         r(triali).responseTime = [];
         r(triali).rt = [];

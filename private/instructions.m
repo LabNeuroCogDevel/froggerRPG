@@ -6,8 +6,7 @@ function instructions(w, s)
     slideNum = 1;
     tex = [];
     for i = 1:length(files)
-        imgfile=fullfile(pathname, files(i).name),
-        im = imread(imgfile);
+        im = imread(fullfile(pathname, files(i).name));
         im = imresize(im, s.screen.res([2 1]));
         tex(i) = Screen('MakeTexture', w, im);
     end
@@ -26,6 +25,7 @@ function instructions(w, s)
     [ @showImg ], ...
     [ @showImg ], ...
     [ @showImg ], ...
+    [ @showImg ] ...
     };
     
     

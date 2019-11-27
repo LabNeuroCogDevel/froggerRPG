@@ -59,5 +59,16 @@ function key = showCal(w, res,varargin)
     end
     
     Screen('Flip', w);
-    [secs,key,deltaSecs]=KbWait;
+    
+    % 20180103 WF - new button box scanner trigger is too fast for kbwait
+    % [secs,key,deltaSecs]=KbWait;
+    % use queue
+    KbQueueCreate(); KbQueueStart();
+    pressed = 0;
+    while ~ pressed
+        [pressed, firstPress, ~, ~,~] = KbQueueCheck();
+        key = firstPress;
+    end
+    % this takes about 0.090 seconds
+    KbQueueStop(); KbQueueRelease();
 end
