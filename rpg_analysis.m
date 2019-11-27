@@ -18,7 +18,7 @@ clc
 %subj = 'scott03';
 %subj = 'bea';
 %subj = 'sub0616';
-subj = 'sub0617';
+subj = '11421';
 
 for i = 1:6
     res(i) = load(sprintf('results/results_%s_%d.mat', subj, i));
@@ -40,7 +40,7 @@ end
 
 
 %% show maps
-if 0
+if 1
     h_maps = figure;
     set(h_maps, 'Position', [537         490        1310         488]);
     for i = 1:6
@@ -324,8 +324,8 @@ if 1
         axis([0 max(x) 0 1]);
         xlabel(varNames{vari});
 
-        alldata.(subj).spatial{vari}.x = x;
-        alldata.(subj).spatial{vari}.y = meanP;
+        alldata.(['s' subj]).spatial{vari}.x = x;
+        alldata.(['s' subj]).spatial{vari}.y = meanP;
     end
 
 
@@ -592,7 +592,7 @@ end
 
 
 %% learning from moves
-if 0
+if 1
     figure;
     moveData = [];
     for i = 1:6
@@ -652,10 +652,10 @@ if 0
         pHigherExpVal(i) = sum([moveData(inds).pickedHigherExpVal])/length(inds);
         pHigherTotalVal(i) = sum([moveData(inds).pickedHigherTotalVal])/length(inds);
 
-        alldata.(subj).moveLearning.pHigherObservedProb(i) = pHigherObservedProb(i);
-        alldata.(subj).moveLearning.pHigherProbLevel(i) = pHigherProbLevel(i);
-        alldata.(subj).moveLearning.pHigherExpVal(i) = pHigherExpVal(i);
-        alldata.(subj).moveLearning.pHigherTotalVal(i) = pHigherTotalVal(i);
+        alldata.(['s' subj]).moveLearning.pHigherObservedProb(i) = pHigherObservedProb(i);
+        alldata.(['s' subj]).moveLearning.pHigherProbLevel(i) = pHigherProbLevel(i);
+        alldata.(['s' subj]).moveLearning.pHigherExpVal(i) = pHigherExpVal(i);
+        alldata.(['s' subj]).moveLearning.pHigherTotalVal(i) = pHigherTotalVal(i);
 
     end
 
