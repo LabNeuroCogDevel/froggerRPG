@@ -16,6 +16,7 @@ function [w,res]=setupScreen(backgroundColor,screenResolution)
      % add antialiasing by using 4
      screennum=max(Screen('Screens'));
      [w, res] = Screen('OpenWindow', screennum, backgroundColor);%, [0 0 screenResolution], 32, 2, 0, 4);
+     %[w, res] = Screen('OpenWindow', screennum, backgroundColor, [0 0 800 600], 32, 2, 0, 4);
 
      %permit transparency
      Screen('BlendFunction', w, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

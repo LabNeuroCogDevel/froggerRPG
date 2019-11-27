@@ -76,18 +76,20 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
 %         %s.screen.res = res;
 %     end
     
-    s=maketex(w,s);
+    s.images.me.tex = Screen('MakeTexture', w, s.images.me.image);
+    s.images.reward{1}.tex = Screen('MakeTexture', w, s.images.reward{1}.image);
+    s.images.reward{2}.tex = Screen('MakeTexture', w, s.images.reward{2}.image);
+    s.images.cogreward{1}.tex = Screen('MakeTexture', w, s.images.cogreward{1}.image);
+    s.images.cogreward{2}.tex = Screen('MakeTexture', w, s.images.cogreward{2}.image);
+    s.images.null.tex = Screen('MakeTexture', w, s.images.null.image);
+    s.images.bg.tex = Screen('MakeTexture', w, s.images.bg.image);
+    s.images.progress_bg.tex = Screen('MakeTexture', w, s.images.progress_bg.image);
     
     pahandle = PsychPortAudio('Open', [], [], 1, s.sounds.null.fs, 2);
     PsychPortAudio('UseSchedule', pahandle, 0);
     s.pahandle = pahandle;
     
-    if ~s.session.simulate
-        % use keypad controled calibration 
-        % so scanner sent '=' does not advance screen
-        % instead of static screen: showCal(w, s.screen.res);
-        calibrate(w,s.screen.res);
-    end
+    showCal(w, s.screen.res);
 
     if runNum == 1 & ~s.session.simulate
         instructions(w, s);
@@ -277,7 +279,10 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         
         
         if validResponse
-            keyPressName = s.keys.string{find(find(keyCode,1,'first')==s.keys.finger)};
+            pushedkey=find(keyCode,1,'first'),
+            pushedidx=find(pushedkey==s.keys.finger),
+            s.keys.string,
+            keyPressName = s.keys.string{pushedidx};
             if strcmp(keyPressName, 'Esc') %find(keyCode,1,'first')==s.keys.finger(5)
                 break;
             end
@@ -623,11 +628,10 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
         showProgress(w, s, e, map, runNum)
         s.events.totalScore = s.events.totalScore + sum([e(:).cogPoints]) + sum([e(:).mapPoints]);
         s.events.totalScore
-        WaitForKey({'Space','q','Escape'});
     end
         
     
-    if 1 || ~s.session.simulate
+    if ~s.session.simulate% && runNum==6
     
         
 %         DrawFormattedText(w, ...
@@ -646,7 +650,7 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
 % %        maptestResults = maptest(w, s, 5, map, 'matchedVisits');
 %         maptestResults = maptest(w, s, 10, map, 'hybrid');
 
-        if ~isempty(runNum) & runNum == s.session.maxRuns
+        if ~isempty(runNum) & runNum == 1%s.session.maxRuns
             DrawFormattedText(w, ...
                 ['Good job!  Now we''ll see how well you learned the map.\n\n' ...
                  'For each of the squares you''ll be shown, indicate\n\n' ...

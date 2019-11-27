@@ -18,14 +18,15 @@ if ~any(eyeTrack == [0 1])
     eyeTrack = 0;
 end
 
-smmode=[];
-% we are always doing main task now
-%task = input('Main task (1) or sensorimotor control (2): ');
-%if task == 2
-%    smmode = 'smcontrol';
-%else
-%    smmode = [];
-%end
+%WF 2016-03-02 -- never do smcontrol, so dont ask
+% task = input('Main task (1) or sensorimotor control (2): ');
+% if task == 2
+%     smmode = 'smcontrol';
+% else
+%     smmode = [];
+% end
+
+smmode = [];
 
 w = []; 
 if startRun == 1
@@ -34,10 +35,11 @@ if startRun == 1
     e = [];
 end
 
-for i = startRun:6
+for i = startRun:1
     [w, s, map, e] = RPG(subj,w, map,s,i, smmode, eyeTrack); 
 end
 
-
+% WF 2016-03-04 -- close everything when dones
+Screen('CloseAll');
 % line 553:
 %                      if [e(ei).cogRes.respEval] | ~eyetrack
