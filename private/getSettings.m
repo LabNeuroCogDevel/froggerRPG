@@ -24,6 +24,8 @@ function s=getSettings(s, host, smmode)
     host(host=='-')='_';
  end 
 
+ s.session.simulate = 0;
+
  % behave true => fixed .5sec ITI
  % MR          => show getready screen
  % MEG         => send trigger codes and photodiode
@@ -47,6 +49,13 @@ function s=getSettings(s, host, smmode)
   s.host.isBehave=1;
   s.host.isMEG=0;
   %s.screen.res=[1440 900];
+ elseif strncmp(host,'reese',15)
+  s.host.type='Behave';
+  s.host.isMR=0;
+  s.host.isBehave=1;
+  s.host.isMEG=0;
+  s.session.simulate = 1;
+  s.screen.res=[800 600];
  else
   s.host.type='Unknown';
   s.host.isMR=0;
@@ -61,7 +70,6 @@ function s=getSettings(s, host, smmode)
  fprintf('Versions: %s PTB %s\n',s.info.MLversion,s.info.PTBversion);
 
  s.session.maxRuns = 6;
- s.session.simulate = 0;
  
  %s.screen.res=[800 600];   % any computer, testing
  %s.screen.res=[1600 1200]; % will's computer
