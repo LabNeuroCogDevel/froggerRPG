@@ -108,7 +108,7 @@ s.events.totalScore = 0;
 
 % map settings
 s.map.gridSize = 3;
-if ~ismac && iswin
+if ~ismac && IsWin
     s.map.pixSize = 540;
 else
     s.map.pixSize = 540;
@@ -256,8 +256,8 @@ s.anti.center = 130;
 
 % eye tracking
 %IOPort('CloseAll');
-if ~ismac && iswin
-    s.serial.port = 'COM2';
+if ~ismac && IsWin
+    s.serial.port = 'COM1';
 else
     s.serial.port = '/dev/ttyS0';
 end
@@ -266,11 +266,14 @@ s.serial.configString = 'BaudRate=57600';
 s.serial.handle = [];
 s.serial.openErrMsg = 'No device';
 s.forceReopenWindow = 0;
-if iswin || exist(s.serial.port, 'file')
+if IsWin || exist(s.serial.port, 'file')
     try
         IOPort('CloseAll')
+        disp('opening com port for eye tracking feedback')
         [s.serial.handle, s.serial.openErrMsg] = IOPort('OpenSerialPort', s.serial.port, s.serial.configString);
+        disp(s.serial.handle)
     catch
+        disp('failed to open com port!')
         % if there was an error, we probably need to re-open the display
         s.forceReopenWindow = 1;
     end

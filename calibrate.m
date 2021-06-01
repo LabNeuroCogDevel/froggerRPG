@@ -9,7 +9,7 @@ function calibrate(varargin)
 
   KbName('UnifyKeyNames');
 
-  if ~ismac && iswin
+  if ~ismac && IsWin
     config_io
   end
   

@@ -59,13 +59,13 @@ function data=testcom(s)
       %WaitSecs(1.0); 
       %[data, ~, ~] = IOPort('Read',s.serial.handle);
       IOPort('CloseAll');
-      if iswin
-           [h, openErr] = IOPort('OpenSerialPort', 'COM2', 'BaudRate=57600');
+      if IsWin
+           [h, openErr] = IOPort('OpenSerialPort', 'COM1', 'BaudRate=57600');
       else
            [h, openErr] = IOPort('OpenSerialPort', '/dev/ttyS0', 'BaudRate=57600');
       end
       IOPort('Purge',h);
-      waitSecs(dur);
+      WaitSecs(dur);
       [data, when, err] = IOPort('Read',h);
   catch e
       disp(e);

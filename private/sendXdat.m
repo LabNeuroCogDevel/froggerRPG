@@ -6,7 +6,7 @@
 % trigger is converted to binary, made into a 1/0 vector, and sent
 function sendXdat(trigger)
 
-    if ~ismac && isWin
+    if ~ismac && IsWin
         outp( hex2dec('D070'), trigger);
     else
         try

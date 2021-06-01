@@ -1,8 +1,8 @@
 %function doPET(subj)
-
+addpath c:\matlab_io32_io64\io64\
 clear
 
-if ~ismac && iswin
+if ~ismac && IsWin
     config_io
 else
     addpath('/home/lncd/linux_parallel_port_ptb_ratrix/')

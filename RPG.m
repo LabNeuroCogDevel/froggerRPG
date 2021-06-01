@@ -156,7 +156,13 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
 
     fprintf(1, 'Starting run at time=%d\n\n', starttime);
     showEventTimes(e);
-    
+    if ~isempty(s.serial.handle)
+        disp('real time eye tracking feedback on');
+        disp(s.serial.handle);
+    else
+        disp('real time eye tracking feedback disabled');
+    end
+
     for ei=1:length(e)
 
 
@@ -462,6 +468,9 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
 
                 if ~isempty(s.serial.handle)
                     [e(ei).eyedata.fixation.raw, e(ei).eyedata.fixation.when, e(ei).eyedata.fixation.errmsg] = IOPort('Read', s.serial.handle);
+                else
+                    disp('no com port!')
+                    disp(s.serial.handle)
                 end
                 
                 if showBonus
@@ -519,7 +528,10 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
                 %   task, so that the next read should be just the cog task
                 if ~isempty(s.serial.handle)
                     [e(ei).eyedata.fixation.raw, e(ei).eyedata.fixation.when, e(ei).eyedata.fixation.errmsg] = IOPort('Read', s.serial.handle);
-
+                    % TODO: remove me if not testing 2021 05 10
+                    disp('com data: ')
+                    disp( e(ei).eyedata.fixation.raw(1:min(end,10)))
+                    
                     % calculate x,y during fixation
                     %   use this as a baseline for determining subsequent eye
                     %   movements.  base it on the last half of the fixation
@@ -541,6 +553,8 @@ function [w, s, map, e] = RPG(subj,w,m,s,runNum,smmode,eyetrack)
                     e(ei).eyedata.fixation.meanY = meanY;
                     e(ei).eyedata.fixation.stdX = stdX;
                     e(ei).eyedata.fixation.stdY = stdY;
+                else
+                    disp('no serial handle. no com data collected')
                 end
                 
                 if ~isempty(s.serial.handle)
